@@ -77,14 +77,34 @@ If you need to process/store the upload immediately:
 
 ## ORM
 
-Currently ActiveRecord is the default orm and I have not tested this with others but it should work by adding the following to your carrierwave initializer:
+Currently ActiveRecord & mongoid are the only tested orms but others should work by adding the following to your carrierwave initializer:
 
-```ruby
 DataMapper::Model.send(:include, ::CarrierWave::Backgrounder::ORM::Base)
 # or
-Mongoid::Document::ClassMethods.send(:include, ::CarrierWave::Backgrounder::ORM::Base)
-# or
 Sequel::Model.send(:extend, ::CarrierWave::Backgrounder::ORM::Base)
+
+If you're using Mongoid and you are working on an embedded collection, you must pass in information on the relation
+
+class User
+  include Mongoid::Document
+  embeds_many :photos
+  ...
+end
+
+class Photo
+  include Mongoid::Document
+  include CarrierWave::Backgrounder::ORM::Mongoid
+
+  ...
+  embedded_in :user, :inverse_of => :photos
+  mount_uploader :image, :PhotoUploader
+  store_in_background :image, false, { :embedded_in :user, :inverse_of => :photos }
+end
+
+See lib/backgrounder/orm/mongoid for more documentation
+
+Contributions are gladly accepted from those who use alternate orms.
+
 ```
 
 Contributions are gladly accepted from those who use these orms.
